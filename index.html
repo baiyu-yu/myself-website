@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>白鱼个人博客</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f9;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 1.5em;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2em;
+        }
+
+        nav {
+            margin-top: 1em;
+            padding: 0.5em;
+            background-color: #555;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin: 0 1em;
+            font-size: 1.1em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            padding: 2em 1em;
+            background: #fff;
+            margin: 2em 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .post {
+            margin-bottom: 1.5em;
+        }
+
+        .post h2 {
+            color: #333;
+            font-size: 1.8em;
+        }
+
+        .post .date {
+            color: #777;
+            font-size: 0.9em;
+        }
+
+        .post p {
+            margin-top: 0.5em;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+
+        .about {
+            background: #eee;
+            padding: 1em;
+            border-radius: 8px;
+            text-align: center;
+            margin: 2em 0;
+        }
+
+        .about h2 {
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .about p {
+            margin-top: 0.5em;
+            font-size: 1em;
+            color: #555;
+        }
+
+        footer {
+            width: 100%;
+            text-align: center;
+            background: #333;
+            color: #fff;
+            padding: 1em;
+            font-size: 0.9em;
+            margin-top: auto;
+        }
+
+        footer a {
+            color: #ddd;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>白鱼个人博客</h1>
+    <p>记录白鱼生活与学习</p>
+</header>
+
+<nav>
+    <a href="#home">首页</a>
+    <a href="#about">关于我</a>
+    <a href="#contact">联系</a>
+</nav>
+
+<div class="container">
+    <section class="post">
+        <h2>白鱼第一篇博客</h2>
+        <p class="date">2024年11月5日</p>
+        <p>喵喵喵喵喵喵喵喵</p>
+    </section>
+    
+    <section class="post">
+        <h2>白鱼心得</h2>
+        <p class="date">2024年10月20日</p>
+        <p>喵喵喵喵喵喵</p>
+    </section>
+</div>
+
+<div class="about" id="about">
+    <h2>关于我</h2>
+    <p>你好，我是一个白鱼。</p>
+</div>
+
+<footer>
+    <p>备案号：粤ICP备2024331324号</p>
+    <p><a href="https://beian.miit.gov.cn" target="_blank">工信部首页</a></p>
+</footer>
+
+</body>
+</html>
