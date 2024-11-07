@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>COC7 人物卡</title>
+        <style>
+            /* 基本样式 */
+            body { font-family: 'Arial', sans-serif; padding: 10px; background-color: #f4f4f4; color: #333; }
+            .container { max-width: 100%; margin: 0 auto; background-color: #fff; padding: 10px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+            h1, h2 { text-align: center; color: #444; }
+            .section { margin: 10px 0; padding: 10px; border-bottom: 1px solid #ddd; }
+            label { display: block; margin: 5px 0; font-weight: bold; }
+            input[type="text"], input[type="number"], select, textarea { padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+            .flex { display: flex; flex-wrap: wrap; gap: 10px; }
+            .flex label { flex: 1 1 100%; }
+    
+            /* 九宫格布局 */
+            .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .grid label { text-align: center; }
+            .grid input[type="number"] { text-align: center; width: 100%; box-sizing: border-box; }
+    
+            /* 技能点横排布局 */
+            .skill-table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow-x: auto; display: block; }
+            .skill-table th, .skill-table td { padding: 8px; text-align: center; border: 1px solid #ccc; min-width: 80px; }
+            .skill-table th { background-color: #e0e0e0; font-weight: bold; }
+            .skill-table input[type="number"] { width: 60px; }
+    
+            /* 总计/困难成功率/极难成功率的表格 */
+            .skill-table .total, .skill-table .hard, .skill-table .extreme { width: 60px; }
+    
+            /* 导入指令文本区域 */
+            textarea { height: 120px; border: 1px solid #ccc; border-radius: 4px; padding: 8px; width: 100%; box-sizing: border-box; }
+    
+            /* 按钮样式 */
+            button { padding: 10px 20px; background-color: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; box-sizing: border-box; }
+            button:hover { background-color: #0056b3; }
+    
+            /* 页脚样式 */
+            footer { text-align: center; margin-top: 20px; color: #777; }
+            footer a { color: #007bff; text-decoration: none; }
+            footer a:hover { text-decoration: underline; }
+    
+            /* 媒体查询 */
+            @media (min-width: 768px) {
+                .container { max-width: 1000px; }
+                .flex label { flex: 1 1 45%; }
+                .grid { grid-template-columns: repeat(3, 1fr); }
+                button { width: auto; }
+                #portraitUpload { width: auto; }
+                .skill-table { display: table; overflow-x: visible; }
+            }
+    
+            /* 移动端缩放适配 */
+            @media (max-width: 767px) {
+                .skill-table th, .skill-table td { font-size: 14px; padding: 6px; }
+                .skill-table input[type="number"] { width: 50px; }
+                .skill-table .total, .skill-table .hard, .skill-table .extreme { width: 50px; }
+            }
+
+            /* 调查员肖像在表格中的位置 */
+            @media (min-width: 768px) {
+                .portrait-container { display: flex; align-items: center; }
+                #portraitContainer { margin-right: 20px; }
+            }
+            @media (max-width: 767px) {
+                .portrait-container { text-align: center; margin-bottom: 20px; }
+                #portraitContainer { margin-bottom: 20px; }
+            }
+
+            /* 调查员详细信息表格 */
+            .details-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .details-table th, .details-table td { padding: 8px; text-align: left; border: 1px solid #ccc; }
+            .details-table th { background-color: #e0e0e0; font-weight: bold; }
+            .details-table textarea { height: 60px; }
+            .details-table .background-story { height: auto; min-height: 600px; }
+
+            /* 调查员肖像在表格左侧 */
+            .portrait-container { display: flex; align-items: flex-start; }
+            #portraitContainer { margin-right: 20px; }
+        </style>
+    </head>
+<body>
+    <div class="container">
+        <h1>COC7 人物卡</h1>
+
+        <!-- 调查员信息 -->
+        <div class="section">
+            <h2>调查员信息</h2>
+            <div class="flex">
+                <label>姓名：<input type="text" id="name"></label>
+                <label>玩家：<input type="text" id="player"></label>
+                <label>时代：
+                    <select id="era">
+                        <option value="1920s">1920s</option>
+                        <option value="现代">现代</option>
+                        <option value="其它">其它</option>
+                    </select>
+                </label>
+                <label>职业：<input type="text" id="profession"></label>
+                <label>职业序号：<input type="number" id="professionCode"></label>
+                <label>年龄：<input type="number" id="age" onchange="calculateMove()"></label>
+                <label>性别：<input type="text" id="gender"></label>
+                <label>住地：<input type="text" id="residence"></label>
+                <label>故乡：<input type="text" id="hometown"></label>
+                <label>现时间：<input type="text" id="currentTime"></label>
+            </div>
+        </div>
+
+        <!-- 属性点 九宫格布局 -->
+        <div class="section">
+            <h2>属性点</h2>
+            <div class="grid">
+                <label>力量（STR）：<input type="number" id="str" value="0" onchange="calculatePoints()"></label>
+                <label>敏捷（DEX）：<input type="number" id="dex" value="0" onchange="calculatePoints()"></label>
+                <label>意志（POW）：<input type="number" id="pow" value="0" onchange="calculatePoints()"></label>
+                <label>体质（CON）：<input type="number" id="con" value="0" onchange="calculatePoints()"></label>
+                <label>外貌（APP）：<input type="number" id="app" value="0" onchange="calculatePoints()"></label>
+                <label>教育（EDU）：<input type="number" id="edu" value="0" onchange="calculatePoints()"></label>
+                <label>体型（SIZ）：<input type="number" id="siz" value="0" onchange="calculatePoints()"></label>
+                <label>智力（INT）：<input type="number" id="int" value="0" onchange="calculatePoints()"></label>
+                <label>幸运（Luck）：<input type="number" id="luck" value="0" onchange="calculatePoints()"></label>
+            </div>
+            <p>已用点数：<span id="totalPoints">0</span></p>
+            <p>不含幸运已用点数：<span id="totalPointsNoLuck">0</span></p>
+        </div>
+
+        <!-- 生命值、理智、魔法、移动力、护甲 -->
+        <div class="section">
+            <h2>生命值、理智、魔法、移动力、护甲</h2>
+            <div class="flex">
+                <label>当前生命值：<input type="number" id="currentHP" readonly></label>
+                <label>最大生命值：<input type="number" id="maxHP" readonly></label>
+                <label>当前理智：<input type="number" id="currentSAN" readonly></label>
+                <label>最大理智：<input type="number" id="maxSAN" readonly></label>
+                <label>魔法值：<input type="number" id="magicPoints" readonly></label>
+                <label>移动力：<input type="number" id="move" readonly></label>
+                <label>护甲：<input type="number" id="armor" readonly></label>
+            </div>
+        </div>
+
+        <!-- 技能点横排布局 -->
+        <div class="section">
+            <h2>技能点</h2>
+            <table class="skill-table">
+                <thead>
+                    <tr>
+                        <th>技能名称</th>
+                        <th>初始</th>
+                        <th>成长</th>
+                        <th>职业</th>
+                        <th>兴趣</th>
+                        <th class="total">总计</th>
+                        <th class="hard">困难成功率</th>
+                        <th class="extreme">极难成功率</th>
+                    </tr>
+                </thead>
+                <tbody id="skills">
+                    <!-- 示例技能行 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="信用评级" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="克苏鲁神话" readonly>
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="text" class="profession" value="————————" readonly></td>
+                        <td><input type="text" class="interest" value="————————" readonly></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 交涉技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="取悦" readonly>
+                        </td>
+                        <td><input type="number" value="15" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="话术" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="恐吓" readonly>
+                        </td>
+                        <td><input type="number" value="15" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="说服" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="会计" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="人类学" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="估价" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="考古学" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="计算机使用" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="攀爬" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="乔装" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="汽车驾驶" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="电气维修" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="急救" readonly>
+                        </td>
+                        <td><input type="number" value="30" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="历史" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="法律" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="图书馆使用" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="聆听" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="锁匠" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="机械维修" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="医学" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="博物学" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="导航" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="神秘学" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="操作重型机械" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="精神分析" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="心理学" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="骑术" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="妙手" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="侦查" readonly>
+                        </td>
+                        <td><input type="number" value="25" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="潜行" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="游泳" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="投掷" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="追踪" readonly>
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="动物驯养" readonly>
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="潜水" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="爆破" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="读唇" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="催眠" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="炮术" readonly>
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 格斗技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="格斗：斗殴" readonly>
+                        </td>
+                        <td><input type="number" value="25" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="格斗①" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="鞭子">鞭子</option>
+                                <option value="链枷">链枷</option>
+                                <option value="绞具">绞具</option>
+                                <option value="斧">斧</option>
+                                <option value="剑">剑</option>
+                                <option value="矛">矛</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="格斗②" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="鞭子">鞭子</option>
+                                <option value="链枷">链枷</option>
+                                <option value="绞具">绞具</option>
+                                <option value="斧">斧</option>
+                                <option value="剑">剑</option>
+                                <option value="矛">矛</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="格斗③" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="鞭子">鞭子</option>
+                                <option value="链枷">链枷</option>
+                                <option value="绞具">绞具</option>
+                                <option value="斧">斧</option>
+                                <option value="剑">剑</option>
+                                <option value="矛">矛</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 射击技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="射击：手枪" readonly>
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="射击①" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="步枪/霰弹枪">步枪/霰弹枪</option>
+                                <option value="冲锋枪">冲锋枪</option>
+                                <option value="弓术">弓术</option>
+                                <option value="喷射器">喷射器</option>
+                                <option value="机枪">机枪</option>
+                                <option value="重武器">重武器</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="射击②" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="步枪/霰弹枪">步枪/霰弹枪</option>
+                                <option value="冲锋枪">冲锋枪</option>
+                                <option value="弓术">弓术</option>
+                                <option value="喷射器">喷射器</option>
+                                <option value="机枪">机枪</option>
+                                <option value="重武器">重武器</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="射击③" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="步枪/霰弹枪">步枪/霰弹枪</option>
+                                <option value="冲锋枪">冲锋枪</option>
+                                <option value="弓术">弓术</option>
+                                <option value="喷射器">喷射器</option>
+                                <option value="机枪">机枪</option>
+                                <option value="重武器">重武器</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 外语技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="外语①" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="外语②" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="外语③" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 科学技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="科学①" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="地质学">地质学</option>
+                                <option value="化学">化学</option>
+                                <option value="生物学">生物学</option>
+                                <option value="数学">数学</option>
+                                <option value="天文学">天文学</option>
+                                <option value="物理">物理</option>
+                                <option value="药学">药学</option>
+                                <option value="植物学">植物学</option>
+                                <option value="动物学">动物学</option>
+                                <option value="密码学">密码学</option>
+                                <option value="工程学">工程学</option>
+                                <option value="气象学">气象学</option>
+                                <option value="司法科学">司法科学</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="科学②" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="地质学">地质学</option>
+                                <option value="化学">化学</option>
+                                <option value="生物学">生物学</option>
+                                <option value="数学">数学</option>
+                                <option value="天文学">天文学</option>
+                                <option value="物理">物理</option>
+                                <option value="药学">药学</option>
+                                <option value="植物学">植物学</option>
+                                <option value="动物学">动物学</option>
+                                <option value="密码学">密码学</option>
+                                <option value="工程学">工程学</option>
+                                <option value="气象学">气象学</option>
+                                <option value="司法科学">司法科学</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="科学③" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="地质学">地质学</option>
+                                <option value="化学">化学</option>
+                                <option value="生物学">生物学</option>
+                                <option value="数学">数学</option>
+                                <option value="天文学">天文学</option>
+                                <option value="物理">物理</option>
+                                <option value="药学">药学</option>
+                                <option value="植物学">植物学</option>
+                                <option value="动物学">动物学</option>
+                                <option value="密码学">密码学</option>
+                                <option value="工程学">工程学</option>
+                                <option value="气象学">气象学</option>
+                                <option value="司法科学">司法科学</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="1" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 驾驶技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="驾驶" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="船">船</option>
+                                <option value="飞行器">飞行器</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="20" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 生存技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="生存" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="10" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 技艺技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="技艺①" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="表演">表演</option>
+                                <option value="美术">美术</option>
+                                <option value="伪造">伪造</option>
+                                <option value="摄影">摄影</option>
+                                <option value="写作">写作</option>
+                                <option value="书法">书法</option>
+                                <option value="乐理">乐理</option>
+                                <option value="厨艺">厨艺</option>
+                                <option value="裁缝">裁缝</option>
+                                <option value="理发">理发</option>
+                                <option value="建筑">建筑</option>
+                                <option value="舞蹈">舞蹈</option>
+                                <option value="酿酒">酿酒</option>
+                                <option value="捕鱼">捕鱼</option>
+                                <option value="歌唱">歌唱</option>
+                                <option value="制陶">制陶</option>
+                                <option value="雕塑">雕塑</option>
+                                <option value="杂技">杂技</option>
+                                <option value="风水">风水</option>
+                                <option value="技术制图">技术制图</option>
+                                <option value="耕作">耕作</option>
+                                <option value="打字">打字</option>
+                                <option value="速记">速记</option>
+                                <option value="木匠">木匠</option>
+                                <option value="莫里斯舞蹈">莫里斯舞蹈</option>
+                                <option value="歌剧歌唱">歌剧歌唱</option>
+                                <option value="粉刷匠与油漆工">粉刷匠与油漆工</option>
+                                <option value="吹真空管">吹真空管</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="技艺②" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="表演">表演</option>
+                                <option value="美术">美术</option>
+                                <option value="伪造">伪造</option>
+                                <option value="摄影">摄影</option>
+                                <option value="写作">写作</option>
+                                <option value="书法">书法</option>
+                                <option value="乐理">乐理</option>
+                                <option value="厨艺">厨艺</option>
+                                <option value="裁缝">裁缝</option>
+                                <option value="理发">理发</option>
+                                <option value="建筑">建筑</option>
+                                <option value="舞蹈">舞蹈</option>
+                                <option value="酿酒">酿酒</option>
+                                <option value="捕鱼">捕鱼</option>
+                                <option value="歌唱">歌唱</option>
+                                <option value="制陶">制陶</option>
+                                <option value="雕塑">雕塑</option>
+                                <option value="杂技">杂技</option>
+                                <option value="风水">风水</option>
+                                <option value="技术制图">技术制图</option>
+                                <option value="耕作">耕作</option>
+                                <option value="打字">打字</option>
+                                <option value="速记">速记</option>
+                                <option value="木匠">木匠</option>
+                                <option value="莫里斯舞蹈">莫里斯舞蹈</option>
+                                <option value="歌剧歌唱">歌剧歌唱</option>
+                                <option value="粉刷匠与油漆工">粉刷匠与油漆工</option>
+                                <option value="吹真空管">吹真空管</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="技艺③" readonly>
+                            <select class="skill-subname">
+                                <option value="等会儿过滤的空值">请选择或者选择自定义填写</option>
+                                <option value="表演">表演</option>
+                                <option value="美术">美术</option>
+                                <option value="伪造">伪造</option>
+                                <option value="摄影">摄影</option>
+                                <option value="写作">写作</option>
+                                <option value="书法">书法</option>
+                                <option value="乐理">乐理</option>
+                                <option value="厨艺">厨艺</option>
+                                <option value="裁缝">裁缝</option>
+                                <option value="理发">理发</option>
+                                <option value="建筑">建筑</option>
+                                <option value="舞蹈">舞蹈</option>
+                                <option value="酿酒">酿酒</option>
+                                <option value="捕鱼">捕鱼</option>
+                                <option value="歌唱">歌唱</option>
+                                <option value="制陶">制陶</option>
+                                <option value="雕塑">雕塑</option>
+                                <option value="杂技">杂技</option>
+                                <option value="风水">风水</option>
+                                <option value="技术制图">技术制图</option>
+                                <option value="耕作">耕作</option>
+                                <option value="打字">打字</option>
+                                <option value="速记">速记</option>
+                                <option value="木匠">木匠</option>
+                                <option value="莫里斯舞蹈">莫里斯舞蹈</option>
+                                <option value="歌剧歌唱">歌剧歌唱</option>
+                                <option value="粉刷匠与油漆工">粉刷匠与油漆工</option>
+                                <option value="吹真空管">吹真空管</option>
+                                <option value="自定义">自定义</option>
+                            </select>
+                            <input type="text" class="custom-subname" style="display:none;">
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 学识技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="学识" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="5" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <!-- 自定义技能 -->
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="自定义技能①" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="自定义技能②" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input type="text" class="skill-name" value="自定义技能③" readonly>
+                            <input type="text" class="custom-subname">
+                        </td>
+                        <td><input type="number" value="0" readonly></td>
+                        <td><input type="number" class="growth" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="profession" onchange="calculateSkillTotal(this)"></td>
+                        <td><input type="number" class="interest" onchange="calculateSkillTotal(this)"></td>
+                        <td class="total">0</td>
+                        <td class="hard">0</td>
+                        <td class="extreme">0</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>已用职业点：<span id="professionPointsUsed">0</span></p>
+            <p>已用兴趣点：<span id="interestPointsUsed">0</span></p>
+            <p>剩余职业点：0</p>
+            <p>剩余兴趣点：0</p>
+            <!-- 职业相关逻辑没写 -->            
+        </div>
+
+        <!-- 骰娘导入指令 -->
+        <div class="section">
+            <h2>骰娘导入指令</h2>
+            <textarea id="dice-command" readonly></textarea>
+            <button onclick="generateCommand()">生成导入指令</button>
+        </div>
+
+        <!-- 上传调查员肖像，但是相关逻辑没写 -->
+        <div class="section">
+            <h2>调查员肖像</h2>
+            <input type="file" id="portraitUpload" accept="image/*" onchange="displayPortrait(this)">
+            <div id="portraitContainer"></div>
+        </div>
+
+        <!-- 调查员详细信息 -->
+        <div class="section">
+            <h2>调查员详细信息</h2>
+            <div class="portrait-container">
+                <div id="portraitContainer"></div>
+                <table class="details-table">
+                    <tr>
+                        <th>形象描述</th>
+                        <td><textarea id="appearance"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection1"></td>
+                    </tr>
+                    <tr>
+                        <th>思想与信念</th>
+                        <td><textarea id="beliefs"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection2"></td>
+                    </tr>
+                    <tr>
+                        <th>重要之人</th>
+                        <td><textarea id="importantPeople"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection3"></td>
+                    </tr>
+                    <tr>
+                        <th>意义非凡之地</th>
+                        <td><textarea id="significantPlaces"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection4"></td>
+                    </tr>
+                    <tr>
+                        <th>宝贵之物</th>
+                        <td><textarea id="treasuredPossessions"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection5"></td>
+                    </tr>
+                    <tr>
+                        <th>特质</th>
+                        <td><textarea id="traits"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection6"></td>
+                    </tr>
+                    <tr>
+                        <th>伤口与疤痕</th>
+                        <td><textarea id="woundsAndScars"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection7"></td>
+                    </tr>
+                    <tr>
+                        <th>恐惧与狂躁症</th>
+                        <td><textarea id="phobiasAndManias"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection8"></td>
+                    </tr>
+                    <tr>
+                        <th>背景故事</th>
+                        <td><textarea id="backgroundStory" class="background-story"></textarea></td>
+                        <td><input type="checkbox" id="keyConnection9"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>       
+
+        <!-- 生成并下载图片按钮 -->
+        <button onclick="generateAndDownloadImage()">生成并下载图片</button>
+
+        <footer>
+            <p>备案号：粤ICP备2024331324号</p>
+            <p><a href="https://beian.miit.gov.cn">工信部首页</a></p>
+        </footer>
+    </div>
+
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="coccard.js"></script>
+</body>
+</html>
